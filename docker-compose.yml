@@ -1,0 +1,65 @@
+version: '3.7'
+
+services:
+
+  app:
+    build: .
+    env_file:
+      - ./.env
+    container_name: my-app
+    restart: always
+    ports:
+      - "${APP_PORT}:3333"
+    volumes:
+      - .:/var/www
+    depends_on:
+      - db
+      - mongodb
+      - redis
+    networks:
+      - app-network
+
+  db:
+    image: postgres:11
+    container_name: my-db
+    restart: always
+    env_file:
+      - ./.env
+    environment:
+      POSTGRES_USER: ${DB_USER}
+      POSTGRES_PASSWORD: ${DB_PASS}
+    volumes:
+      - './.docker/database/data:/var/lib/postgresql/data'
+    ports:
+      - ${DB_USER}:5432
+    networks:
+      - app-network
+
+  mongodb:
+    image: mongo:latest
+    container_name: "meu-mongodb"
+    restart: always
+    environment:
+      - MONGO_DATA_DIR=/data/db
+      - MONGO_LOG_DIR=/dev/null
+    volumes:
+      - ./.docker/mongo/data:/data/db
+    ports:
+      - ${MONGO_PORT}:27017
+    networks:
+      - app-network
+
+  redis:
+    image: redis:alpine
+    container_name: meu-redis
+    restart: always
+    ports:
+      - "${REDIS_PORT}:6379"
+    volumes:
+      - ./.docker/redis:/data
+    networks:
+      - app-network
+
+networks:
+  app-network:
+    driver: bridge
